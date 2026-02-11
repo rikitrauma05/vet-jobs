@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { supabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
@@ -43,52 +44,80 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="card" style={{ maxWidth: 420 }}>
-        <h1>Registrazione completata</h1>
-        <p className="muted">
-          Il tuo account è stato creato correttamente.
-          <br />
-          Attendi l’approvazione da parte di un amministratore.
-        </p>
+      <div className="auth-wrap">
+        <div className="card auth-card">
+          <div className="card-header">
+            <h1 className="card-title">Registrazione completata</h1>
+          </div>
+
+          <p className="muted">
+            Il tuo account è stato creato correttamente.
+            <br />
+            Attendi l’approvazione da parte di un amministratore.
+          </p>
+
+          <div className="section">
+            <Link href="/login" className="btn btnPrimary">
+              Vai al Login
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="card" style={{ maxWidth: 420 }}>
-      <h1>Registrazione</h1>
+    <div className="auth-wrap">
+      <div className="card auth-card">
+        <div className="card-header">
+          <h1 className="card-title">Registrazione</h1>
+          <p className="muted">
+            Crea un account per accedere alla piattaforma.
+          </p>
+        </div>
 
-      <form onSubmit={handleSubmit} className="row" style={{ flexDirection: "column" }}>
-        <input
-          type="text"
-          placeholder="Nome completo"
-          required
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-        />
+        <form onSubmit={handleSubmit} className="form">
+          <input
+            className="input"
+            type="text"
+            placeholder="Nome completo"
+            required
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+          />
 
-        <input
-          type="email"
-          placeholder="Email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+          <input
+            className="input"
+            type="email"
+            placeholder="Email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <input
+            className="input"
+            type="password"
+            placeholder="Password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-        {error && <p style={{ color: "salmon" }}>{error}</p>}
+          {error && <p className="alert">{error}</p>}
 
-        <button className="btn btnPrimary" disabled={loading}>
-          {loading ? "Creazione..." : "Registrati"}
-        </button>
-      </form>
+          <button className="btn btnPrimary" disabled={loading}>
+            {loading ? "Creazione..." : "Registrati"}
+          </button>
+        </form>
+
+        <p className="muted auth-footer">
+          Hai già un account?{" "}
+          <Link href="/login" className="link">
+            Accedi
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

@@ -2,17 +2,15 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-type RelazioneNome = {
-  nome: string;
-} | {
-  nome: string;
-}[] | null;
+type RelazioneNome =
+  | { nome: string }
+  | { nome: string }[]
+  | null;
 
-type RelazioneVet = {
-  email: string | null;
-} | {
-  email: string | null;
-}[] | null;
+type RelazioneVet =
+  | { email: string | null }
+  | { email: string | null }[]
+  | null;
 
 type LavoroAdmin = {
   id: string;
@@ -60,63 +58,91 @@ export default async function AdminLavoriPage() {
 
   const lavori = (data ?? []) as LavoroAdmin[];
 
+  const totaleIncasso = lavori.reduce((acc, l) => {
+    return acc + (l.prezzo ?? 0);
+  }, 0);
+
   return (
     <div className="card">
-      <h1>Gestione lavori</h1>
-      <p className="muted">Inserimento prezzo (solo admin)</p>
+      <div className="card-header">
+        <h1 className="card-title">Gestione Lavori</h1>
+        <p className="muted">
+          Inserimento prezzo e monitoraggio incassi
+        </p>
+      </div>
 
-      <table style={{ width: "100%", marginTop: 16 }}>
-        <thead>
-          <tr>
-            <th align="left">Cliente</th>
-            <th align="left">Prestazione</th>
-            <th align="left">Veterinario</th>
-            <th align="left">Descrizione</th>
-            <th align="left">Data</th>
-            <th align="left">Prezzo (€)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lavori.map((l) => (
-            <tr key={l.id}>
-              <td>{getNome(l.clienti)}</td>
-              <td>{getNome(l.prestazioni)}</td>
-              <td>{getEmail(l.vet)}</td>
-              <td>{l.descrizione || "—"}</td>
-              <td>{new Date(l.created_at).toLocaleDateString()}</td>
-              <td>
-                <form
-                  action="/admin/lavori/prezzo"
-                  method="POST"
-                  style={{ display: "flex", gap: 8 }}
-                >
-                  <input type="hidden" name="lavoro_id" value={l.id} />
+      <div className="section">
+        <div className="totale-box">
+          Totale incasso:{" "}
+          <strong>
+            € {totaleIncasso.toFixed(2)}
+          </strong>
+        </div>
+      </div>
 
-                  <input
-                    type="number"
-                    name="prezzo"
-                    step="0.01"
-                    min="0"
-                    defaultValue={l.prezzo ?? ""}
-                    placeholder="€"
-                    style={{ width: 90 }}
-                  />
-
-                  <button className="btn btnPrimary">Salva</button>
-                </form>
-              </td>
-            </tr>
-          ))}
-
-          {lavori.length === 0 && (
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
             <tr>
-              <td colSpan={6} className="muted">
-                Nessun lavoro trovato
-              </td>
+              <th>Cliente</th>
+              <th>Prestazione</th>
+              <th>Veterinario</th>
+              <th>Descrizione</th>
+              <th>Data</th>
+              <th>Prezzo (€)</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {lavori.map((l) => (
+              <tr key={l.id}>
+                <td>{getNome(l.clienti)}</td>
+                <td>{getNome(l.prestazioni)}</td>
+                <td>{getEmail(l.vet)}</td>
+                <td>{l.descrizione || "—"}</td>
+                <td>
+                  {new Date(l.created_at).toLocaleDateString()}
+                </td>
+                <td>
+                  <form
+                    action="/admin/lavori/prezzo"
+                    method="POST"
+                    className="row"
+                  >
+                    <input
+                      type="hidden"
+                      name="lavoro_id"
+                      value={l.id}
+                    />
+
+                    <input
+                      type="number"
+                      name="prezzo"
+                      step="0.01"
+                      min="0"
+                      defaultValue={l.prezzo ?? ""}
+                      placeholder="€"
+                      className="input prezzo-input"
+                    />
+
+                    <button className="btn btnPrimary">
+                      Salva
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+
+            {lavori.length === 0 && (
+              <tr>
+                <td colSpan={6} className="muted">
+                  Nessun lavoro trovato
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

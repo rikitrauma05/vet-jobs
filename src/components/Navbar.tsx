@@ -2,14 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { supabaseBrowserClient } from "@/lib/supabase/client";
 
 type Role = "admin" | "vet" | null;
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const isAdmin = pathname.startsWith("/admin");
+
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<Role>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     async function loadUser() {
@@ -35,47 +40,128 @@ export default function Navbar() {
     loadUser();
   }, []);
 
+  useEffect(() => {
+    // Attiva tema admin rosso
+    document.body.classList.toggle("admin-theme", isAdmin);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    // Chiude menu quando cambi pagina
+    setMobileOpen(false);
+  }, [pathname]);
+
   if (loading) return null;
 
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "16px 24px",
-        borderBottom: "1px solid #222",
-      }}
-    >
-      <Link href="/" style={{ fontWeight: 700 }}>
-        VetJobs
-      </Link>
+    <nav className="navbar">
+      <div className="navbar-inner">
+        <Link href="/" className="navbar-brand">
+          VetJobs
+        </Link>
 
-      <div style={{ display: "flex", gap: 12 }}>
+        {/* Desktop links */}
+        <div className="navbar-links">
+          {!user && (
+            <>
+              <Link href="/login" className="navbar-link">
+                Login
+              </Link>
+              <Link href="/register" className="navbar-link">
+                Registrati
+              </Link>
+            </>
+          )}
+
+          {user && role === "admin" && (
+            <>
+              <Link href="/admin" className="navbar-link">
+                Dashboard
+              </Link>
+              <Link href="/admin/clienti" className="navbar-link">
+                Clienti
+              </Link>
+              <Link href="/admin/prestazioni" className="navbar-link">
+                Prestazioni
+              </Link>
+              <Link href="/admin/lavori" className="navbar-link">
+                Lavori
+              </Link>
+            </>
+          )}
+
+          {user && role === "vet" && (
+            <>
+              <Link href="/vet" className="navbar-link">
+                Area Vet
+              </Link>
+              <Link href="/vet/lavori" className="navbar-link">
+                I miei lavori
+              </Link>
+            </>
+          )}
+
+          {user && (
+            <Link href="/logout" className="navbar-link">
+              Logout
+            </Link>
+          )}
+        </div>
+
+        {/* Mobile toggle */}
+        <div
+          className="navbar-toggle"
+          onClick={() => setMobileOpen((prev) => !prev)}
+        >
+          ☰
+        </div>
+      </div>
+
+      {/* Mobile dropdown */}
+      <div className={`navbar-mobile ${mobileOpen ? "active" : ""}`}>
         {!user && (
           <>
-            <Link href="/login">Login</Link>
-            <Link href="/register">Registrati</Link>
+            <Link href="/login" className="navbar-link">
+              Login
+            </Link>
+            <Link href="/register" className="navbar-link">
+              Registrati
+            </Link>
           </>
         )}
 
         {user && role === "admin" && (
           <>
-            <Link href="/admin">Admin</Link>
-            <Link href="/admin/clienti">Clienti</Link>
-            <Link href="/admin/prestazioni">Prestazioni</Link>
-            <Link href="/admin/lavori">Lavori</Link>
+            <Link href="/admin" className="navbar-link">
+              Dashboard
+            </Link>
+            <Link href="/admin/clienti" className="navbar-link">
+              Clienti
+            </Link>
+            <Link href="/admin/prestazioni" className="navbar-link">
+              Prestazioni
+            </Link>
+            <Link href="/admin/lavori" className="navbar-link">
+              Lavori
+            </Link>
           </>
         )}
 
         {user && role === "vet" && (
           <>
-            <Link href="/vet">Area Vet</Link>
-            <Link href="/vet/lavori">I miei lavori</Link>
+            <Link href="/vet" className="navbar-link">
+              Area Vet
+            </Link>
+            <Link href="/vet/lavori" className="navbar-link">
+              I miei lavori
+            </Link>
           </>
         )}
 
-        {user && <Link href="/logout">Logout</Link>}
+        {user && (
+          <Link href="/logout" className="navbar-link">
+            Logout
+          </Link>
+        )}
       </div>
     </nav>
   );

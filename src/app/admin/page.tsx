@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-type VetRow = {
+type UserRow = {
   id: string;
   email: string | null;
   role: string;
@@ -15,54 +15,77 @@ export default async function AdminPage() {
   const { data } = await supabase
     .from("profiles")
     .select("id, email, role, approved")
-    .eq("role", "vet")
     .order("created_at", { ascending: false });
 
-  const veterinari = (data ?? []) as VetRow[];
+  const utenti = (data ?? []) as UserRow[];
 
   return (
     <div className="card">
-      <h1>Amministrazione</h1>
-      <p className="muted">Gestione utenti veterinari</p>
+      <div className="card-header">
+        <h1 className="card-title">Gestione Utenti</h1>
+        <p className="muted">Approva, modifica ruolo o elimina utenti</p>
+      </div>
 
-      <table style={{ width: "100%", marginTop: 16 }}>
-        <thead>
-          <tr>
-            <th align="left">Email</th>
-            <th align="left">Stato</th>
-            <th align="left">Azione</th>
-          </tr>
-        </thead>
-        <tbody>
-          {veterinari.map((vet) => (
-            <tr key={vet.id}>
-              <td>{vet.email || "—"}</td>
-              <td>{vet.approved ? "Approvato" : "In attesa"}</td>
-              <td>
-                <form action="/admin/approve" method="POST">
-                  <input type="hidden" name="userId" value={vet.id} />
-                  <input
-                    type="hidden"
-                    name="approved"
-                    value={(!vet.approved).toString()}
-                  />
-                  <button className="btn">
-                    {vet.approved ? "Revoca" : "Approva"}
-                  </button>
-                </form>
-              </td>
-            </tr>
-          ))}
-
-          {veterinari.length === 0 && (
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
             <tr>
-              <td colSpan={3} className="muted">
-                Nessun veterinario trovato
-              </td>
+              <th>Email</th>
+              <th>Ruolo</th>
+              <th>Stato</th>
+              <th>Azioni</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {utenti.map((u) => (
+              <tr key={u.id}>
+                <td>{u.email || "—"}</td>
+
+                <td>
+                  <form action="/admin/update-role" method="POST" className="row">
+                    <input type="hidden" name="userId" value={u.id} />
+                    <select name="role" defaultValue={u.role} className="input">
+                      <option value="vet">Vet</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <button className="btn btnPrimary">Salva</button>
+                  </form>
+                </td>
+
+                <td>
+                  {u.approved ? (
+                    <span className="status-approved">Approvato</span>
+                  ) : (
+                    <span className="status-pending">In attesa</span>
+                  )}
+                </td>
+
+                <td className="row">
+                  <form action="/admin/approve" method="POST">
+                    <input type="hidden" name="userId" value={u.id} />
+                    <input
+                      type="hidden"
+                      name="approved"
+                      value={(!u.approved).toString()}
+                    />
+                    <button className="btn">
+                      {u.approved ? "Revoca" : "Approva"}
+                    </button>
+                  </form>
+
+                  <form action="/admin/delete-user" method="POST">
+                    <input type="hidden" name="userId" value={u.id} />
+                    <button className="btn btnDanger">
+                      Elimina
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

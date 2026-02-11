@@ -2,20 +2,26 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
-  const supabase = await createSupabaseServerClient();
-  const formData = await request.formData();
+  try {
+    const { userId, approved } = await request.json();
 
-  const userId = formData.get("userId") as string;
-  const approved = formData.get("approved") === "true";
+    if (!userId) {
+      return NextResponse.json({ error: "UserId mancante" }, { status: 400 });
+    }
 
-  if (!userId) {
-    return NextResponse.redirect(new URL("/admin", request.url));
+    const supabase = await createSupabaseServerClient();
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ approved })
+      .eq("id", userId);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-
-  await supabase
-    .from("profiles")
-    .update({ approved })
-    .eq("id", userId);
-
-  return NextResponse.redirect(new URL("/admin", request.url));
 }

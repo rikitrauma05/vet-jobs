@@ -41,12 +41,6 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    // Attiva tema admin rosso
-    document.body.classList.toggle("admin-theme", isAdmin);
-  }, [isAdmin]);
-
-  useEffect(() => {
-    // Chiude menu quando cambi pagina
     setMobileOpen(false);
   }, [pathname]);
 
@@ -60,7 +54,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop links */}
-        <div className="navbar-links">
+        <div className="navbar-links desktop-only">
           {!user && (
             <>
               <Link href="/login" className="navbar-link">
@@ -109,10 +103,10 @@ export default function Navbar() {
 
         {/* Mobile toggle */}
         <div
-          className="navbar-toggle"
+          className="navbar-toggle mobile-only"
           onClick={() => setMobileOpen((prev) => !prev)}
         >
-          ☰
+          {mobileOpen ? "✕" : "☰"}
         </div>
       </div>
 

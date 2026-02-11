@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     const nome = formData.get("nome") as string;
 
     if (!nome) {
-      return NextResponse.redirect(new URL("/admin/prestazioni", req.url));
+      return NextResponse.redirect(new URL("/admin/clienti", req.url));
     }
 
     const supabaseAdmin = createClient(
@@ -15,10 +15,10 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    await supabaseAdmin.from("prestazioni").insert({ nome });
+    await supabaseAdmin.from("clienti").insert({ nome });
 
-    return NextResponse.redirect(new URL("/admin/prestazioni", req.url));
+    return NextResponse.redirect(new URL("/admin/clienti", req.url));
   } catch {
-    return NextResponse.redirect(new URL("/admin/prestazioni", req.url));
+    return NextResponse.redirect(new URL("/admin/clienti", req.url));
   }
 }

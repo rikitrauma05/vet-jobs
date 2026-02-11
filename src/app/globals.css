@@ -394,3 +394,381 @@ body {
 .prezzo-input {
   max-width: 100px;
 }
+/* =========================
+   ADMIN MODE (rosso)
+========================= */
+
+.admin-mode {
+  --bg: #1a0b0b;
+  --card: #2a1212;
+  --primary: #ff4d4d;
+  --border: rgba(255, 0, 0, 0.2);
+}
+
+.admin-mode .card {
+  border-color: rgba(255, 0, 0, 0.25);
+}
+
+.admin-mode .btnPrimary {
+  background: #ff4d4d;
+  color: white;
+}
+/* ===============================
+   RESET MOBILE
+================================ */
+
+html, body {
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+}
+
+/* ===============================
+   INPUTS
+================================ */
+
+input,
+select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ===============================
+   LISTE VERTICALI
+================================ */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+@media (max-width: 600px) {
+  .list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+/* ===============================
+   TABELLE RESPONSIVE
+================================ */
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+@media (max-width: 768px) {
+  .table {
+    font-size: 14px;
+  }
+}
+
+/* ===============================
+   BOTTONI
+================================ */
+
+.btnDanger {
+  background: #b42318;
+  color: white;
+  border: none;
+}
+
+.btnDanger:hover {
+  background: #911b14;
+}
+
+/* ===============================
+   STATUS
+================================ */
+
+.status-approved {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.status-pending {
+  color: #f59e0b;
+  font-weight: 600;
+}
+/* ===============================
+   NAVBAR
+================================ */
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.navbar-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.navbar-link {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.navbar-link:hover {
+  opacity: 1;
+}
+
+.navbar-toggle {
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* Mobile / Desktop visibility */
+
+.desktop-only {
+  display: flex;
+}
+
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: block;
+  }
+}
+
+/* Mobile dropdown */
+
+.navbar-mobile {
+  display: none;
+  flex-direction: column;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  gap: 12px;
+}
+
+.navbar-mobile.active {
+  display: flex;
+}
+/* ===============================
+   VET LAVORI
+================================ */
+
+.vet-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  margin-bottom: 28px;
+}
+
+.vet-lavori-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vet-lavoro-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.vet-lavoro-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.vet-lavoro-row .label {
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* Mobile optimization */
+
+@media (max-width: 600px) {
+  .vet-lavoro-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+/* =========================
+   FORM ELEMENTS
+========================= */
+
+input,
+select,
+textarea {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.2);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+/* =========================
+   TABLE STYLING
+========================= */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.table th,
+.table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-size: 14px;
+}
+
+.table th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* =========================
+   RESPONSIVE TABLE (MOBILE)
+========================= */
+
+@media (max-width: 768px) {
+  .table thead {
+    display: none;
+  }
+
+  .table tr {
+    display: block;
+    margin-bottom: 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border: none;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 12px;
+  }
+}
+
+/* =========================
+   CARD IMPROVEMENTS
+========================= */
+
+.card {
+  padding: 24px;
+}
+
+.card h1 {
+  margin-top: 0;
+  margin-bottom: 6px;
+}
+
+.card p {
+  margin-top: 0;
+}
+
+/* =========================
+   FORM SPACING
+========================= */
+
+form .row {
+  gap: 12px;
+}
+
+button {
+  white-space: nowrap;
+}

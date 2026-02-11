@@ -86,34 +86,43 @@ export default async function LavoriVetPage() {
       </form>
 
       {/* LISTA LAVORI */}
-      <table style={{ width: "100%" }}>
-        <thead>
-          <tr>
-            <th align="left">Cliente</th>
-            <th align="left">Prestazione</th>
-            <th align="left">Descrizione</th>
-            <th align="left">Data</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lavori?.map((l) => (
-            <tr key={l.id}>
-              <td>{getNome(l.clienti) ?? "—"}</td>
-              <td>{getNome(l.prestazioni) ?? "—"}</td>
-              <td>{l.descrizione || "—"}</td>
-              <td>{new Date(l.created_at).toLocaleDateString()}</td>
-            </tr>
-          ))}
+      <table className="table">
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Prestazione</th>
+      <th>Descrizione</th>
+      <th>Data</th>
+    </tr>
+  </thead>
+  <tbody>
+    {lavori?.map((l) => (
+      <tr key={l.id}>
+        <td data-label="Cliente">
+          {getNome(l.clienti) ?? "—"}
+        </td>
+        <td data-label="Prestazione">
+          {getNome(l.prestazioni) ?? "—"}
+        </td>
+        <td data-label="Descrizione">
+          {l.descrizione || "—"}
+        </td>
+        <td data-label="Data">
+          {new Date(l.created_at).toLocaleDateString()}
+        </td>
+      </tr>
+    ))}
 
-          {(!lavori || lavori.length === 0) && (
-            <tr>
-              <td colSpan={4} className="muted">
-                Nessun lavoro inserito
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+    {(!lavori || lavori.length === 0) && (
+      <tr>
+        <td colSpan={4} className="muted">
+          Nessun lavoro inserito
+        </td>
+      </tr>
+    )}
+  </tbody>
+</table>
+
     </div>
   );
 }

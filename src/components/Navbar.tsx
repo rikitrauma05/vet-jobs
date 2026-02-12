@@ -1,37 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-type Role = "admin" | "vet" | null;
 
 export default function Navbar() {
   const router = useRouter();
-
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [role, setRole] = useState<Role>(null);
-
-  useEffect(() => {
-    async function loadUser() {
-      try {
-        const res = await fetch("/api/auth/me", {
-          cache: "no-store",
-        });
-        const data = await res.json();
-        setUser(data.user);
-        setRole(data.role);
-      } catch {
-        setUser(null);
-        setRole(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadUser();
-  }, []);
 
   async function handleLogout() {
     await fetch("/logout");
@@ -39,19 +12,13 @@ export default function Navbar() {
     router.refresh();
   }
 
-  function handleAdminClick(
+  function handleProtectedClick(
     e: React.MouseEvent<HTMLAnchorElement>,
     href: string
   ) {
-    if (role !== "admin") {
-      e.preventDefault();
-      alert("Accesso riservato agli amministratori.");
-      return;
-    }
+    e.preventDefault();
     router.push(href);
   }
-
-  if (loading) return null;
 
   return (
     <nav className="navbar">
@@ -61,56 +28,50 @@ export default function Navbar() {
         </Link>
 
         <div className="navbar-links desktop-only">
-          {!user && (
-            <>
-              <Link href="/login" className="navbar-link">
-                Login
-              </Link>
-              <Link href="/register" className="navbar-link">
-                Registrati
-              </Link>
-            </>
-          )}
+          {/* Sempre visibili */}
+          <Link href="/login" className="navbar-link">
+            Login
+          </Link>
 
-          {user && (
-            <>
-              <Link
-                href="/admin"
-                className="navbar-link"
-                onClick={(e) => handleAdminClick(e, "/admin")}
-              >
-                Dashboard
-              </Link>
+          <Link href="/register" className="navbar-link">
+            Registrati
+          </Link>
 
-              <Link
-                href="/admin/clienti"
-                className="navbar-link"
-                onClick={(e) => handleAdminClick(e, "/admin/clienti")}
-              >
-                Clienti
-              </Link>
+          <Link
+            href="/admin"
+            className="navbar-link"
+            onClick={(e) => handleProtectedClick(e, "/admin")}
+          >
+            Dashboard
+          </Link>
 
-              <Link
-                href="/admin/prestazioni"
-                className="navbar-link"
-                onClick={(e) => handleAdminClick(e, "/admin/prestazioni")}
-              >
-                Prestazioni
-              </Link>
+          <Link
+            href="/admin/clienti"
+            className="navbar-link"
+            onClick={(e) => handleProtectedClick(e, "/admin/clienti")}
+          >
+            Clienti
+          </Link>
 
-              <Link
-                href="/admin/lavori"
-                className="navbar-link"
-                onClick={(e) => handleAdminClick(e, "/admin/lavori")}
-              >
-                Lavori
-              </Link>
+          <Link
+            href="/admin/prestazioni"
+            className="navbar-link"
+            onClick={(e) => handleProtectedClick(e, "/admin/prestazioni")}
+          >
+            Prestazioni
+          </Link>
 
-              <button onClick={handleLogout} className="navbar-link">
-                Logout
-              </button>
-            </>
-          )}
+          <Link
+            href="/admin/lavori"
+            className="navbar-link"
+            onClick={(e) => handleProtectedClick(e, "/admin/lavori")}
+          >
+            Lavori
+          </Link>
+
+          <button onClick={handleLogout} className="navbar-link">
+            Logout
+          </button>
         </div>
       </div>
     </nav>

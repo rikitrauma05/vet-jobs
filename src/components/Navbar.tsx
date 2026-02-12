@@ -21,7 +21,6 @@ export default function Navbar() {
         });
 
         const data = await res.json();
-
         setUser(data.user);
         setRole(data.role);
       } catch {
@@ -37,8 +36,8 @@ export default function Navbar() {
 
   async function handleLogout() {
     await fetch("/logout");
-    router.refresh();
     router.replace("/login");
+    router.refresh();
   }
 
   if (loading) return null;
@@ -51,6 +50,7 @@ export default function Navbar() {
         </Link>
 
         <div className="navbar-links desktop-only">
+          {/* NON LOGGATO */}
           {!user && (
             <>
               <Link href="/login" className="navbar-link">
@@ -62,6 +62,7 @@ export default function Navbar() {
             </>
           )}
 
+          {/* ADMIN */}
           {user && role === "admin" && (
             <>
               <Link href="/admin" className="navbar-link">
@@ -76,16 +77,14 @@ export default function Navbar() {
               <Link href="/admin/lavori" className="navbar-link">
                 Lavori
               </Link>
+              <button onClick={handleLogout} className="navbar-link">
+                Logout
+              </button>
             </>
           )}
 
+          {/* VET */}
           {user && role === "vet" && (
-            <Link href="/vet/lavori" className="navbar-link">
-              I miei lavori
-            </Link>
-          )}
-
-          {user && (
             <button onClick={handleLogout} className="navbar-link">
               Logout
             </button>

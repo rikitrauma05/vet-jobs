@@ -3,7 +3,11 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next();
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,7 +18,11 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: any) {
-          response.cookies.set({ name, value, ...options });
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          });
         },
         remove(name: string, options: any) {
           response.cookies.set({
@@ -28,12 +36,12 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // 🔥 QUESTA È LA CHIAVE
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // 🔥 Questa chiamata gestisce correttamente refresh token
+  await supabase.auth.getSession();
 
-  const user = session?.user ?? null;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
 

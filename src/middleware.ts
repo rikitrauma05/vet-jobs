@@ -16,20 +16,27 @@ export async function middleware(request: NextRequest) {
         set(name: string, value: string, options: any) {
           response.cookies.set({ name, value, ...options });
         },
-        remove(name: string) {
-          response.cookies.delete(name);
+        remove(name: string, options: any) {
+          response.cookies.set({
+            name,
+            value: "",
+            ...options,
+            maxAge: 0,
+          });
         },
       },
     }
   );
 
+  // 🔥 QUESTA È LA CHIAVE
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const user = session?.user ?? null;
 
   const pathname = request.nextUrl.pathname;
 
-  // Non loggato → blocco aree protette
   if (!user && (pathname.startsWith("/admin") || pathname.startsWith("/vet"))) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
@@ -41,17 +48,14 @@ export async function middleware(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    // profilo mancante o non approvato
     if (!profile || !profile.approved) {
       return NextResponse.redirect(new URL("/pending", request.url));
     }
 
-    // vet che prova ad entrare in /admin
     if (pathname.startsWith("/admin") && profile.role !== "admin") {
       return NextResponse.redirect(new URL("/vet", request.url));
     }
 
-    // admin che prova ad entrare in /vet (consentito o reindirizzato)
     if (pathname.startsWith("/vet") && profile.role === "admin") {
       return NextResponse.redirect(new URL("/admin", request.url));
     }

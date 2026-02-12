@@ -51,6 +51,7 @@ export default function LoginPage() {
 
     if (!profile.approved) {
       router.replace("/pending");
+      router.refresh();
       return;
     }
 
@@ -59,6 +60,8 @@ export default function LoginPage() {
     } else {
       router.replace("/vet");
     }
+
+    router.refresh();
   }
 
   return (

@@ -1,6 +1,7 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import AdminThemeWrapper from "@/components/AdminThemeWrapper";
+import RefreshOnLoad from "@/components/RefreshOnLoad";
 
 export default function RootLayout({
   children,
@@ -11,6 +12,7 @@ export default function RootLayout({
     <html lang="it">
       <body>
         <AdminThemeWrapper>
+          <RefreshOnLoad />
           <Navbar />
           <main className="container">{children}</main>
         </AdminThemeWrapper>

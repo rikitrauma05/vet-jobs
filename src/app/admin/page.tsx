@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import AdminUsersClient from "./AdminUsersClient";
 
@@ -11,6 +12,8 @@ type UserRow = {
 };
 
 export default async function AdminPage() {
+  await requireAdmin();
+
   const supabase = await createSupabaseServerClient();
 
   const { data } = await supabase
@@ -18,7 +21,5 @@ export default async function AdminPage() {
     .select("id, email, role, approved")
     .order("created_at", { ascending: false });
 
-  const utenti = (data ?? []) as UserRow[];
-
-  return <AdminUsersClient utenti={utenti} />;
+  return <AdminUsersClient utenti={(data ?? []) as UserRow[]} />;
 }

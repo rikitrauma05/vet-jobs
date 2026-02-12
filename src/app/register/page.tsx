@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { supabaseBrowserClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const supabase = createSupabaseBrowserClient();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -17,7 +19,7 @@ export default function RegisterPage() {
     setError(null);
     setLoading(true);
 
-    const { data, error } = await supabaseBrowserClient.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -29,63 +31,27 @@ export default function RegisterPage() {
     }
 
     if (data.user) {
-      await supabaseBrowserClient.from("profiles").insert({
+      // crea profilo base
+      await supabase.from("profiles").insert({
         id: data.user.id,
-        full_name: fullName,
-        email: email,
+        email: data.user.email,
         role: "vet",
         approved: false,
       });
+
+      router.replace("/pending");
     }
-
-    setSuccess(true);
-    setLoading(false);
-  }
-
-  if (success) {
-    return (
-      <div className="auth-wrap">
-        <div className="card auth-card">
-          <div className="card-header">
-            <h1 className="card-title">Registrazione completata</h1>
-          </div>
-
-          <p className="muted">
-            Il tuo account è stato creato correttamente.
-            <br />
-            Attendi l’approvazione da parte di un amministratore.
-          </p>
-
-          <div className="section">
-            <Link href="/login" className="btn btnPrimary">
-              Vai al Login
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   return (
     <div className="auth-wrap">
       <div className="card auth-card">
         <div className="card-header">
-          <h1 className="card-title">Registrazione</h1>
-          <p className="muted">
-            Crea un account per accedere alla piattaforma.
-          </p>
+          <h1 className="card-title">Registrati</h1>
+          <p className="muted">Crea un nuovo account.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="form">
-          <input
-            className="input"
-            type="text"
-            placeholder="Nome completo"
-            required
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-          />
-
           <input
             className="input"
             type="email"
@@ -107,14 +73,14 @@ export default function RegisterPage() {
           {error && <p className="alert">{error}</p>}
 
           <button className="btn btnPrimary" disabled={loading}>
-            {loading ? "Creazione..." : "Registrati"}
+            {loading ? "Registrazione..." : "Registrati"}
           </button>
         </form>
 
         <p className="muted auth-footer">
           Hai già un account?{" "}
-          <Link href="/login" className="link">
-            Accedi
+          <Link className="link" href="/login">
+            Login
           </Link>
         </p>
       </div>

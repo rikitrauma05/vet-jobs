@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -18,9 +19,16 @@ export default async function LavoriVetPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return null;
-  }
+  if (!user) redirect("/login");
+
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role, approved")
+    .eq("id", user.id)
+    .single();
+
+  if (!me?.approved) redirect("/pending");
+  if (me?.role !== "vet") redirect("/admin");
 
   const { data: clienti } = await supabase
     .from("clienti")
@@ -34,13 +42,15 @@ export default async function LavoriVetPage() {
 
   const { data: lavori } = await supabase
     .from("lavori")
-    .select(`
+    .select(
+      `
       id,
       descrizione,
       created_at,
       clienti:clienti!lavori_cliente_id_fkey(nome),
       prestazioni:prestazioni!lavori_prestazione_id_fkey(nome)
-    `)
+    `
+    )
     .eq("vet_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -49,7 +59,6 @@ export default async function LavoriVetPage() {
       <h1>I miei lavori</h1>
       <p className="muted">Inserisci un nuovo lavoro</p>
 
-      {/* FORM INSERIMENTO */}
       <form
         action="/vet/lavori/new"
         method="POST"
@@ -75,54 +84,43 @@ export default async function LavoriVetPage() {
           </select>
         </div>
 
-        <textarea
-          name="descrizione"
-          placeholder="Descrizione (opzionale)"
-        />
+        <textarea name="descrizione" placeholder="Descrizione (opzionale)" />
 
         <button className="btn btnPrimary" style={{ marginTop: 8 }}>
           Salva lavoro
         </button>
       </form>
 
-      {/* LISTA LAVORI */}
       <table className="table">
-  <thead>
-    <tr>
-      <th>Cliente</th>
-      <th>Prestazione</th>
-      <th>Descrizione</th>
-      <th>Data</th>
-    </tr>
-  </thead>
-  <tbody>
-    {lavori?.map((l) => (
-      <tr key={l.id}>
-        <td data-label="Cliente">
-          {getNome(l.clienti) ?? "—"}
-        </td>
-        <td data-label="Prestazione">
-          {getNome(l.prestazioni) ?? "—"}
-        </td>
-        <td data-label="Descrizione">
-          {l.descrizione || "—"}
-        </td>
-        <td data-label="Data">
-          {new Date(l.created_at).toLocaleDateString()}
-        </td>
-      </tr>
-    ))}
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Prestazione</th>
+            <th>Descrizione</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          {lavori?.map((l: any) => (
+            <tr key={l.id}>
+              <td data-label="Cliente">{getNome(l.clienti) ?? "—"}</td>
+              <td data-label="Prestazione">{getNome(l.prestazioni) ?? "—"}</td>
+              <td data-label="Descrizione">{l.descrizione || "—"}</td>
+              <td data-label="Data">
+                {new Date(l.created_at).toLocaleDateString()}
+              </td>
+            </tr>
+          ))}
 
-    {(!lavori || lavori.length === 0) && (
-      <tr>
-        <td colSpan={4} className="muted">
-          Nessun lavoro inserito
-        </td>
-      </tr>
-    )}
-  </tbody>
-</table>
-
+          {(!lavori || lavori.length === 0) && (
+            <tr>
+              <td colSpan={4} className="muted">
+                Nessun lavoro inserito
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -1,77 +1,35 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+  let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+        getAll() {
+          return request.cookies.getAll();
         },
-        set(name: string, value: string, options: any) {
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: any) {
-          response.cookies.set({
-            name,
-            value: "",
-            ...options,
-            maxAge: 0,
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+            response.cookies.set(name, value, options);
           });
         },
       },
     }
   );
 
-  // 🔥 Questa chiamata gestisce correttamente refresh token
-  await supabase.auth.getSession();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const pathname = request.nextUrl.pathname;
-
-  if (!user && (pathname.startsWith("/admin") || pathname.startsWith("/vet"))) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  if (user && (pathname.startsWith("/admin") || pathname.startsWith("/vet"))) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, approved")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || !profile.approved) {
-      return NextResponse.redirect(new URL("/pending", request.url));
-    }
-
-    if (pathname.startsWith("/admin") && profile.role !== "admin") {
-      return NextResponse.redirect(new URL("/vet", request.url));
-    }
-
-    if (pathname.startsWith("/vet") && profile.role === "admin") {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
-  }
+  // IMPORTANTISSIMO: questo call forza la lettura/refresh della sessione e sincronizza i cookie
+  await supabase.auth.getUser();
 
   return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/vet/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

@@ -1,22 +1,23 @@
-import { NextResponse } from "next/server";
+import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export async function GET() {
+export async function requireAdmin() {
   const supabase = await createSupabaseServerClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ user: null, role: null });
-  }
+  if (!user) redirect("/login");
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, approved")
     .eq("id", user.id)
     .single();
 
-  return NextResponse.json({ user, role: profile?.role ?? null });
+  if (!profile?.approved) redirect("/pending");
+  if (profile?.role !== "admin") redirect("/vet");
+
+  return user;
 }

@@ -1,9 +1,12 @@
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import LavoriClient from "./LavoriClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminLavoriPage() {
+  await requireAdmin();
+
   const supabase = await createSupabaseServerClient();
 
   const { data } = await supabase
@@ -19,7 +22,5 @@ export default async function AdminLavoriPage() {
     `)
     .order("created_at", { ascending: false });
 
-  return (
-    <LavoriClient lavori={data ?? []} />
-  );
+  return <LavoriClient lavori={data ?? []} />;
 }

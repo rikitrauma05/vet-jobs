@@ -1,48 +1,45 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Role = "admin" | "vet" | null;
 
-type AuthData = {
-  user: any;
-  role: Role;
-};
-
 export default function Navbar() {
-  const pathname = usePathname();
   const router = useRouter();
 
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [auth, setAuth] = useState<AuthData>({ user: null, role: null });
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [role, setRole] = useState<Role>(null);
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    async function fetchAuth() {
+    async function loadUser() {
       try {
         const res = await fetch("/api/auth/me", {
           cache: "no-store",
         });
 
         const data = await res.json();
-        setAuth(data);
+
+        setUser(data.user);
+        setRole(data.role);
       } catch {
-        setAuth({ user: null, role: null });
+        setUser(null);
+        setRole(null);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchAuth();
-  }, [pathname]);
+    loadUser();
+  }, []);
 
-  const { user, role } = auth;
+  async function handleLogout() {
+    await fetch("/logout");
+    router.refresh();
+    router.replace("/login");
+  }
 
   if (loading) return null;
 
@@ -89,72 +86,11 @@ export default function Navbar() {
           )}
 
           {user && (
-            <Link
-              href="/logout"
-              className="navbar-link"
-              onClick={() => {
-                router.refresh();
-              }}
-            >
+            <button onClick={handleLogout} className="navbar-link">
               Logout
-            </Link>
+            </button>
           )}
         </div>
-
-        <div
-          className="navbar-toggle mobile-only"
-          onClick={() => setMobileOpen((prev) => !prev)}
-        >
-          {mobileOpen ? "✕" : "☰"}
-        </div>
-      </div>
-
-      <div className={`navbar-mobile ${mobileOpen ? "active" : ""}`}>
-        {!user && (
-          <>
-            <Link href="/login" className="navbar-link">
-              Login
-            </Link>
-            <Link href="/register" className="navbar-link">
-              Registrati
-            </Link>
-          </>
-        )}
-
-        {user && role === "admin" && (
-          <>
-            <Link href="/admin" className="navbar-link">
-              Dashboard
-            </Link>
-            <Link href="/admin/clienti" className="navbar-link">
-              Clienti
-            </Link>
-            <Link href="/admin/prestazioni" className="navbar-link">
-              Prestazioni
-            </Link>
-            <Link href="/admin/lavori" className="navbar-link">
-              Lavori
-            </Link>
-          </>
-        )}
-
-        {user && role === "vet" && (
-          <Link href="/vet/lavori" className="navbar-link">
-            I miei lavori
-          </Link>
-        )}
-
-        {user && (
-          <Link
-            href="/logout"
-            className="navbar-link"
-            onClick={() => {
-              router.refresh();
-            }}
-          >
-            Logout
-          </Link>
-        )}
       </div>
     </nav>
   );

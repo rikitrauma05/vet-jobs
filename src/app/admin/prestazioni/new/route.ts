@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createClient } from "@supabase/supabase-js";
 
 export async function POST(req: Request) {
   try {
+    await requireAdmin();
+
     const formData = await req.formData();
     const nome = formData.get("nome") as string;
 
     if (!nome) {
-      return NextResponse.redirect(new URL("/admin/prestazioni", req.url));
+      return NextResponse.redirect(
+        new URL("/admin/prestazioni", req.url)
+      );
     }
 
     const supabaseAdmin = createClient(
@@ -15,10 +20,20 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    await supabaseAdmin.from("prestazioni").insert({ nome });
+    const { error } = await supabaseAdmin
+      .from("prestazioni")
+      .insert({ nome });
 
-    return NextResponse.redirect(new URL("/admin/prestazioni", req.url));
+    if (error) {
+      return NextResponse.redirect(
+        new URL("/admin/prestazioni", req.url)
+      );
+    }
+
+    return NextResponse.redirect(
+      new URL("/admin/prestazioni", req.url)
+    );
   } catch {
-    return NextResponse.redirect(new URL("/admin/prestazioni", req.url));
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 }

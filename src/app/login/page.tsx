@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabaseBrowserClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export default function LoginPage() {
   const router = useRouter();
+  const supabase = createSupabaseBrowserClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,7 +19,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const { error } = await supabaseBrowserClient.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -29,8 +30,35 @@ export default function LoginPage() {
       return;
     }
 
-    // Usa router invece di hard reload
-    router.replace("/redirect");
+    const user = data.user;
+    if (!user) {
+      setError("Login non riuscito.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: profile, error: pErr } = await supabase
+      .from("profiles")
+      .select("role, approved")
+      .eq("id", user.id)
+      .single();
+
+    if (pErr || !profile) {
+      setError("Profilo non trovato.");
+      setLoading(false);
+      return;
+    }
+
+    if (!profile.approved) {
+      router.replace("/pending");
+      return;
+    }
+
+    if (profile.role === "admin") {
+      router.replace("/admin");
+    } else {
+      router.replace("/vet");
+    }
   }
 
   return (

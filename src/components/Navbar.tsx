@@ -1,48 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { supabaseBrowserClient } from "@/lib/supabase/client";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 type Role = "admin" | "vet" | null;
 
+type AuthData = {
+  user: any;
+  role: Role;
+};
+
 export default function Navbar() {
   const pathname = usePathname();
-  const isAdmin = pathname.startsWith("/admin");
+  const router = useRouter();
 
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [role, setRole] = useState<Role>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    async function loadUser() {
-      const {
-        data: { user },
-      } = await supabaseBrowserClient.auth.getUser();
-
-      setUser(user);
-
-      if (user) {
-        const { data: profile } = await supabaseBrowserClient
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-
-        setRole(profile?.role ?? null);
-      }
-
-      setLoading(false);
-    }
-
-    loadUser();
-  }, []);
+  const [auth, setAuth] = useState<AuthData>({ user: null, role: null });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    async function fetchAuth() {
+      try {
+        const res = await fetch("/api/auth/me", {
+          cache: "no-store",
+        });
+
+        const data = await res.json();
+        setAuth(data);
+      } catch {
+        setAuth({ user: null, role: null });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAuth();
+  }, [pathname]);
+
+  const { user, role } = auth;
 
   if (loading) return null;
 
@@ -53,7 +53,6 @@ export default function Navbar() {
           VetJobs
         </Link>
 
-        {/* Desktop links */}
         <div className="navbar-links desktop-only">
           {!user && (
             <>
@@ -84,24 +83,24 @@ export default function Navbar() {
           )}
 
           {user && role === "vet" && (
-            <>
-              <Link href="/vet" className="navbar-link">
-                Area Vet
-              </Link>
-              <Link href="/vet/lavori" className="navbar-link">
-                I miei lavori
-              </Link>
-            </>
+            <Link href="/vet/lavori" className="navbar-link">
+              I miei lavori
+            </Link>
           )}
 
           {user && (
-            <Link href="/logout" className="navbar-link">
+            <Link
+              href="/logout"
+              className="navbar-link"
+              onClick={() => {
+                router.refresh();
+              }}
+            >
               Logout
             </Link>
           )}
         </div>
 
-        {/* Mobile toggle */}
         <div
           className="navbar-toggle mobile-only"
           onClick={() => setMobileOpen((prev) => !prev)}
@@ -110,7 +109,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile dropdown */}
       <div className={`navbar-mobile ${mobileOpen ? "active" : ""}`}>
         {!user && (
           <>
@@ -141,18 +139,19 @@ export default function Navbar() {
         )}
 
         {user && role === "vet" && (
-          <>
-            <Link href="/vet" className="navbar-link">
-              Area Vet
-            </Link>
-            <Link href="/vet/lavori" className="navbar-link">
-              I miei lavori
-            </Link>
-          </>
+          <Link href="/vet/lavori" className="navbar-link">
+            I miei lavori
+          </Link>
         )}
 
         {user && (
-          <Link href="/logout" className="navbar-link">
+          <Link
+            href="/logout"
+            className="navbar-link"
+            onClick={() => {
+              router.refresh();
+            }}
+          >
             Logout
           </Link>
         )}

@@ -19,7 +19,6 @@ export default function Navbar() {
         const res = await fetch("/api/auth/me", {
           cache: "no-store",
         });
-
         const data = await res.json();
         setUser(data.user);
         setRole(data.role);
@@ -40,6 +39,18 @@ export default function Navbar() {
     router.refresh();
   }
 
+  function handleAdminClick(
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) {
+    if (role !== "admin") {
+      e.preventDefault();
+      alert("Accesso riservato agli amministratori.");
+      return;
+    }
+    router.push(href);
+  }
+
   if (loading) return null;
 
   return (
@@ -50,7 +61,6 @@ export default function Navbar() {
         </Link>
 
         <div className="navbar-links desktop-only">
-          {/* NON LOGGATO */}
           {!user && (
             <>
               <Link href="/login" className="navbar-link">
@@ -62,32 +72,44 @@ export default function Navbar() {
             </>
           )}
 
-          {/* ADMIN */}
-          {user && role === "admin" && (
+          {user && (
             <>
-              <Link href="/admin" className="navbar-link">
+              <Link
+                href="/admin"
+                className="navbar-link"
+                onClick={(e) => handleAdminClick(e, "/admin")}
+              >
                 Dashboard
               </Link>
-              <Link href="/admin/clienti" className="navbar-link">
+
+              <Link
+                href="/admin/clienti"
+                className="navbar-link"
+                onClick={(e) => handleAdminClick(e, "/admin/clienti")}
+              >
                 Clienti
               </Link>
-              <Link href="/admin/prestazioni" className="navbar-link">
+
+              <Link
+                href="/admin/prestazioni"
+                className="navbar-link"
+                onClick={(e) => handleAdminClick(e, "/admin/prestazioni")}
+              >
                 Prestazioni
               </Link>
-              <Link href="/admin/lavori" className="navbar-link">
+
+              <Link
+                href="/admin/lavori"
+                className="navbar-link"
+                onClick={(e) => handleAdminClick(e, "/admin/lavori")}
+              >
                 Lavori
               </Link>
+
               <button onClick={handleLogout} className="navbar-link">
                 Logout
               </button>
             </>
-          )}
-
-          {/* VET */}
-          {user && role === "vet" && (
-            <button onClick={handleLogout} className="navbar-link">
-              Logout
-            </button>
           )}
         </div>
       </div>

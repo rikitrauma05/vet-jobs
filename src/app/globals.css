@@ -298,9 +298,7 @@ body {
   border-radius: 14px;
 }
 
-.table {
-  min-width: 720px; /* evita compressione illegibile su mobile */
-}
+
 /* =========================
    AUTH PAGES
 ========================= */
@@ -380,12 +378,19 @@ body {
 ========================= */
 
 .totale-box {
-  padding: 14px 18px;
-  border-radius: 14px;
+  padding: 14px;
+  border-radius: 12px;
   background: var(--card-2);
   border: 1px solid var(--border);
-  font-size: 16px;
+  font-size: 15px;
 }
+
+@media (max-width: 768px) {
+  .totale-box {
+    text-align: center;
+  }
+}
+
 
 /* =========================
    PREZZO INPUT
@@ -429,9 +434,10 @@ html, body {
 
 @media (max-width: 768px) {
   .container {
-    padding: 12px;
+    padding: 10px 14px;
   }
 }
+
 
 /* ===============================
    INPUTS
@@ -771,4 +777,58 @@ form .row {
 
 button {
   white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+}
+@media (max-width: 768px) {
+  .btn,
+  .btnPrimary,
+  .btnDanger {
+    width: 100%;
+  }
+}
+@media (max-width: 768px) {
+  .list-item,
+  .vet-lavoro-card {
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .list-item button,
+  .vet-lavoro-card button {
+    width: 100%;
+  }
+}
+@media (max-width: 768px) {
+  .card h1 {
+    font-size: 22px;
+  }
+
+  .card-title {
+    font-size: 18px;
+  }
+}
+@media (max-width: 768px) {
+
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 100%;
+    width: 100%;
+    padding: 12px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 100%;
+  }
+
 }

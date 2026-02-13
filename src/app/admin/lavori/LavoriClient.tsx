@@ -43,7 +43,7 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
     await fetch("/admin/lavori/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(rows.map(r => ({ id: r.id, prezzo: r.prezzo }))),
+      body: JSON.stringify(rows.map((r) => ({ id: r.id, prezzo: r.prezzo }))),
     });
 
     setDirty(false);
@@ -75,49 +75,44 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
         </div>
       </div>
 
-      <div className="table-wrap">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Prestazione</th>
-              <th>Vet</th>
-              <th>Descrizione</th>
-              <th>Data</th>
-              <th>Prezzo</th>
-              <th>Azioni</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((l) => (
-              <tr key={l.id}>
-                <td>{getNome(l.clienti)}</td>
-                <td>{getNome(l.prestazioni)}</td>
-                <td>{getEmail(l.vet)}</td>
-                <td>{l.descrizione || "—"}</td>
-                <td>{new Date(l.created_at).toLocaleDateString()}</td>
-                <td>
-                  <input
-                    className="input prezzo-input"
-                    type="number"
-                    value={l.prezzo ?? ""}
-                    onChange={(e) =>
-                      handleChange(l.id, e.target.value)
-                    }
-                  />
-                </td>
-                <td>
-                  <button
-                    className="btn btnDanger"
-                    onClick={() => elimina(l.id)}
-                  >
-                    Elimina
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="lavori-container">
+        {rows.map((l) => (
+          <div key={l.id} className="lavoro-card">
+            <div className="lavoro-top">
+              <div className="lavoro-cliente">
+                {getNome(l.clienti)}
+              </div>
+              <div className="lavoro-data">
+                {new Date(l.created_at).toLocaleDateString()}
+              </div>
+            </div>
+
+            <div className="lavoro-body">
+              <div><strong>Prestazione:</strong> {getNome(l.prestazioni)}</div>
+              <div><strong>Vet:</strong> {getEmail(l.vet)}</div>
+              {l.descrizione && (
+                <div><strong>Note:</strong> {l.descrizione}</div>
+              )}
+            </div>
+
+            <input
+              className="input lavoro-prezzo"
+              type="number"
+              placeholder="Prezzo"
+              value={l.prezzo ?? ""}
+              onChange={(e) =>
+                handleChange(l.id, e.target.value)
+              }
+            />
+
+            <button
+              className="btn btnDanger"
+              onClick={() => elimina(l.id)}
+            >
+              Elimina
+            </button>
+          </div>
+        ))}
       </div>
 
       {dirty && (

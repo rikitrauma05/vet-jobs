@@ -16,7 +16,7 @@ type Lavoro = {
 function getNome(rel: any) {
   if (!rel) return "—";
   if (Array.isArray(rel)) return rel[0]?.nome ?? "—";
-  return rel.nome;
+  return rel.nome ?? "—";
 }
 
 function getEmail(rel: any) {
@@ -26,7 +26,7 @@ function getEmail(rel: any) {
 }
 
 export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
-  /* 🔹 ORDINAMENTO SOLO ALL'INIZIALIZZAZIONE */
+  /* 🔹 ORDINAMENTO SOLO UNA VOLTA */
   const [rows, setRows] = useState(() =>
     [...lavori].sort((a, b) => {
       const dataA = new Date(a.data_prestazione ?? a.created_at).getTime();
@@ -45,7 +45,7 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
     setPrestazioneFilter("");
   }
 
-  /* 🔹 Liste uniche per autocomplete */
+  /* 🔹 Liste uniche autocomplete */
   const clientiUnici = useMemo(() => {
     return Array.from(
       new Set(rows.map((l) => getNome(l.clienti)))
@@ -58,7 +58,7 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
     ).filter(Boolean) as string[];
   }, [rows]);
 
-  /* 🔹 SOLO FILTRO — NIENTE SORT QUI */
+  /* 🔹 SOLO FILTRO */
   const filteredRows = useMemo(() => {
     return rows.filter((l) => {
       return (
@@ -113,7 +113,7 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
     });
 
     setDirty(false);
-    location.reload(); // 🔥 qui si riordina
+    location.reload(); // riordina solo qui
   }
 
   async function elimina(id: string) {
@@ -142,17 +142,15 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
         Totale incasso: <strong>€ {totale.toFixed(2)}</strong>
       </div>
 
-      {/* 🔎 FILTRI */}
+      {/* FILTRI */}
       <div className="filtro-box">
-        <div className="row" style={{ gap: 8 }}>
+        <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
           <input
             list="clienti-list"
             className="input"
             placeholder="Cerca cliente..."
             value={clienteFilter}
-            onChange={(e) =>
-              setClienteFilter(e.target.value)
-            }
+            onChange={(e) => setClienteFilter(e.target.value)}
           />
           <datalist id="clienti-list">
             {clientiUnici.map((c) => (
@@ -165,9 +163,7 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
             className="input"
             placeholder="Cerca prestazione..."
             value={prestazioneFilter}
-            onChange={(e) =>
-              setPrestazioneFilter(e.target.value)
-            }
+            onChange={(e) => setPrestazioneFilter(e.target.value)}
           />
           <datalist id="prestazioni-list">
             {prestazioniUniche.map((p) => (
@@ -208,8 +204,7 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
                 </div>
                 {l.descrizione && (
                   <div>
-                    <strong>Note:</strong>{" "}
-                    {l.descrizione}
+                    <strong>Note:</strong> {l.descrizione}
                   </div>
                 )}
               </div>
@@ -250,12 +245,14 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
       </div>
 
       {dirty && (
-        <button
-          className="btn btnPrimary"
-          onClick={salvaModifiche}
-        >
-          Salva modifiche
-        </button>
+        <div style={{ marginTop: 16 }}>
+          <button
+            className="btn btnPrimary"
+            onClick={salvaModifiche}
+          >
+            Salva modifiche
+          </button>
+        </div>
       )}
     </div>
   );

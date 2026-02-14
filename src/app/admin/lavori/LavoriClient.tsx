@@ -141,6 +141,47 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
       <div className="totale-box">
         Totale incasso: <strong>€ {totale.toFixed(2)}</strong>
       </div>
+      <div className="pdf-box" style={{ marginTop: 12 }}>
+  <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+    <input
+      type="date"
+      className="input"
+      id="pdf-from"
+    />
+    <input
+      type="date"
+      className="input"
+      id="pdf-to"
+    />
+
+    <button
+      className="btn btnPrimary"
+      onClick={async () => {
+        const dataFrom = (document.getElementById("pdf-from") as HTMLInputElement)?.value;
+        const dataTo = (document.getElementById("pdf-to") as HTMLInputElement)?.value;
+
+        const res = await fetch("/admin/lavori/pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dataFrom, dataTo }),
+        });
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "report-prestazioni.pdf";
+        a.click();
+
+        window.URL.revokeObjectURL(url);
+      }}
+    >
+      Scarica PDF
+    </button>
+  </div>
+</div>
+
 
       {/* FILTRI */}
       <div className="filtro-box">

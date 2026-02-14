@@ -15,6 +15,7 @@ export default async function AdminLavoriPage() {
       id,
       descrizione,
       created_at,
+      data_prestazione,
       prezzo,
       clienti:clienti(nome),
       prestazioni:prestazioni(nome),

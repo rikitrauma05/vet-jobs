@@ -21,12 +21,16 @@ export async function POST(req: Request) {
 
       await supabase
         .from("lavori")
-        .update({ prezzo: u.prezzo ?? null })
+        .update({
+          prezzo: u.prezzo ?? null,
+          data_prestazione: u.data_prestazione ?? null,
+        })
         .eq("id", u.id);
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error(err);
     return NextResponse.json(
       { error: "Non autorizzato" },
       { status: 401 }

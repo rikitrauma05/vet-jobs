@@ -66,10 +66,11 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
         );
       })
       .sort((a, b) => {
-        const dataA = a.data_prestazione ?? a.created_at;
-        const dataB = b.data_prestazione ?? b.created_at;
-        return new Date(dataB).getTime() - new Date(dataA).getTime();
+        const dataA = new Date(a.data_prestazione ?? a.created_at).getTime();
+        const dataB = new Date(b.data_prestazione ?? b.created_at).getTime();
+        return dataB - dataA;
       });
+
   }, [rows, clienteFilter, prestazioneFilter]);
 
   const totale = filteredRows.reduce(

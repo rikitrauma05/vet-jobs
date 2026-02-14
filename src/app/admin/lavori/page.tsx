@@ -21,7 +21,10 @@ export default async function AdminLavoriPage() {
     prestazioni:prestazioni(nome),
     vet:profiles(email)
   `)
-  .order("data_prestazione", { ascending: false, nullsFirst: false })
+  .order("data_prestazione", {
+    ascending: false,
+    nullsFirst: false,
+  });
 
 
 

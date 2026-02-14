@@ -52,26 +52,28 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
 
   /* 🔹 Filtro + ordinamento */
   const filteredRows = useMemo(() => {
-    return rows
-      .filter((l) => {
-        return (
-          (!clienteFilter ||
-            getNome(l.clienti)
-              .toLowerCase()
-              .includes(clienteFilter.toLowerCase())) &&
-          (!prestazioneFilter ||
-            getNome(l.prestazioni)
-              .toLowerCase()
-              .includes(prestazioneFilter.toLowerCase()))
-        );
-      })
-      .sort((a, b) => {
-        const dataA = new Date(a.data_prestazione ?? a.created_at).getTime();
-        const dataB = new Date(b.data_prestazione ?? b.created_at).getTime();
-        return dataB - dataA;
-      });
+  const filtered = rows.filter((l) => {
+    return (
+      (!clienteFilter ||
+        getNome(l.clienti)
+          .toLowerCase()
+          .includes(clienteFilter.toLowerCase())) &&
+      (!prestazioneFilter ||
+        getNome(l.prestazioni)
+          .toLowerCase()
+          .includes(prestazioneFilter.toLowerCase()))
+    );
+  });
 
-  }, [rows, clienteFilter, prestazioneFilter]);
+  if (dirty) return filtered;
+
+  return filtered.slice().sort((a, b) => {
+    const dataA = new Date(a.data_prestazione ?? a.created_at).getTime();
+    const dataB = new Date(b.data_prestazione ?? b.created_at).getTime();
+    return dataB - dataA;
+  });
+}, [rows, clienteFilter, prestazioneFilter, dirty]);
+
 
   const totale = filteredRows.reduce(
     (acc, l) => acc + (l.prezzo ?? 0),

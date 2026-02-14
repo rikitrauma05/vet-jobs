@@ -10,18 +10,20 @@ export default async function AdminLavoriPage() {
   const supabase = await createSupabaseServerClient();
 
   const { data } = await supabase
-    .from("lavori")
-    .select(`
-      id,
-      descrizione,
-      created_at,
-      data_prestazione,
-      prezzo,
-      clienti:clienti(nome),
-      prestazioni:prestazioni(nome),
-      vet:profiles(email)
-    `)
-    .order("created_at", { ascending: false });
+  .from("lavori")
+  .select(`
+    id,
+    descrizione,
+    created_at,
+    data_prestazione,
+    prezzo,
+    clienti:clienti(nome),
+    prestazioni:prestazioni(nome),
+    vet:profiles(email)
+  `)
+  .order("data_prestazione", { ascending: false, nullsFirst: false })
+
+
 
   return <LavoriClient lavori={data ?? []} />;
 }

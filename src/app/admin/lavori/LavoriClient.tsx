@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 type Lavoro = {
   id: string;
@@ -25,15 +25,50 @@ function getEmail(rel: any) {
   return rel.email ?? "—";
 }
 
-export default function LavoriClient({
-  lavori,
-}: {
-  lavori: Lavoro[];
-}) {
+export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
   const [rows, setRows] = useState(lavori);
   const [dirty, setDirty] = useState(false);
 
-  const totale = rows.reduce(
+  const [filters, setFilters] = useState({
+    cliente: "",
+    prestazione: "",
+    dataFrom: "",
+    dataTo: "",
+    prezzoMin: "",
+    prezzoMax: "",
+  });
+
+  const filteredRows = useMemo(() => {
+    return rows
+      .filter((l) => {
+        const data = l.data_prestazione ?? l.created_at;
+        const prezzo = l.prezzo ?? 0;
+
+        return (
+          (!filters.cliente ||
+            getNome(l.clienti)
+              .toLowerCase()
+              .includes(filters.cliente.toLowerCase())) &&
+          (!filters.prestazione ||
+            getNome(l.prestazioni)
+              .toLowerCase()
+              .includes(filters.prestazione.toLowerCase())) &&
+          (!filters.dataFrom || data >= filters.dataFrom) &&
+          (!filters.dataTo || data <= filters.dataTo) &&
+          (!filters.prezzoMin ||
+            prezzo >= Number(filters.prezzoMin)) &&
+          (!filters.prezzoMax ||
+            prezzo <= Number(filters.prezzoMax))
+        );
+      })
+      .sort((a, b) => {
+        const dataA = a.data_prestazione ?? a.created_at;
+        const dataB = b.data_prestazione ?? b.created_at;
+        return new Date(dataB).getTime() - new Date(dataA).getTime();
+      });
+  }, [rows, filters]);
+
+  const totale = filteredRows.reduce(
     (acc, l) => acc + (l.prezzo ?? 0),
     0
   );
@@ -42,10 +77,7 @@ export default function LavoriClient({
     setRows((prev) =>
       prev.map((r) =>
         r.id === id
-          ? {
-              ...r,
-              prezzo: value === "" ? null : Number(value),
-            }
+          ? { ...r, prezzo: value === "" ? null : Number(value) }
           : r
       )
     );
@@ -55,9 +87,7 @@ export default function LavoriClient({
   function handleDataChange(id: string, value: string) {
     setRows((prev) =>
       prev.map((r) =>
-        r.id === id
-          ? { ...r, data_prestazione: value }
-          : r
+        r.id === id ? { ...r, data_prestazione: value } : r
       )
     );
     setDirty(true);
@@ -98,32 +128,93 @@ export default function LavoriClient({
       <div className="card-header">
         <h1 className="card-title">Gestione Lavori</h1>
         <p className="muted">
-          Modifica prezzi, date o elimina lavori
+          Filtra, modifica o elimina lavori
         </p>
       </div>
 
-      <div className="section">
-        <div className="totale-box">
-          Totale incasso:{" "}
-          <strong>€ {totale.toFixed(2)}</strong>
+      <div className="totale-box">
+        Totale incasso: <strong>€ {totale.toFixed(2)}</strong>
+      </div>
+
+      <div className="filtro-box">
+        <input
+          className="input"
+          placeholder="Filtra cliente"
+          onChange={(e) =>
+            setFilters((f) => ({ ...f, cliente: e.target.value }))
+          }
+        />
+
+        <input
+          className="input"
+          placeholder="Filtra prestazione"
+          onChange={(e) =>
+            setFilters((f) => ({
+              ...f,
+              prestazione: e.target.value,
+            }))
+          }
+        />
+
+        <div className="row">
+          <input
+            type="date"
+            className="input"
+            onChange={(e) =>
+              setFilters((f) => ({
+                ...f,
+                dataFrom: e.target.value,
+              }))
+            }
+          />
+          <input
+            type="date"
+            className="input"
+            onChange={(e) =>
+              setFilters((f) => ({
+                ...f,
+                dataTo: e.target.value,
+              }))
+            }
+          />
+        </div>
+
+        <div className="row">
+          <input
+            type="number"
+            className="input"
+            placeholder="Prezzo min"
+            onChange={(e) =>
+              setFilters((f) => ({
+                ...f,
+                prezzoMin: e.target.value,
+              }))
+            }
+          />
+          <input
+            type="number"
+            className="input"
+            placeholder="Prezzo max"
+            onChange={(e) =>
+              setFilters((f) => ({
+                ...f,
+                prezzoMax: e.target.value,
+              }))
+            }
+          />
         </div>
       </div>
 
       <div className="lavori-container">
-        {rows.map((l) => {
-          const dataVisuale =
-            l.data_prestazione ?? l.created_at;
+        {filteredRows.map((l) => {
+          const data = l.data_prestazione ?? l.created_at;
 
           return (
             <div key={l.id} className="lavoro-card">
               <div className="lavoro-top">
-                <div className="lavoro-cliente">
-                  {getNome(l.clienti)}
-                </div>
-                <div className="lavoro-data">
-                  {new Date(
-                    dataVisuale
-                  ).toLocaleDateString()}
+                <div>{getNome(l.clienti)}</div>
+                <div>
+                  {new Date(data).toLocaleDateString()}
                 </div>
               </div>
 
@@ -132,12 +223,9 @@ export default function LavoriClient({
                   <strong>Prestazione:</strong>{" "}
                   {getNome(l.prestazioni)}
                 </div>
-
                 <div>
-                  <strong>Vet:</strong>{" "}
-                  {getEmail(l.vet)}
+                  <strong>Vet:</strong> {getEmail(l.vet)}
                 </div>
-
                 {l.descrizione && (
                   <div>
                     <strong>Note:</strong>{" "}
@@ -156,23 +244,17 @@ export default function LavoriClient({
                     .split("T")[0]
                 }
                 onChange={(e) =>
-                  handleDataChange(
-                    l.id,
-                    e.target.value
-                  )
+                  handleDataChange(l.id, e.target.value)
                 }
               />
 
               <input
-                className="input lavoro-prezzo"
+                className="input"
                 type="number"
                 placeholder="Prezzo"
                 value={l.prezzo ?? ""}
                 onChange={(e) =>
-                  handlePrezzoChange(
-                    l.id,
-                    e.target.value
-                  )
+                  handlePrezzoChange(l.id, e.target.value)
                 }
               />
 
@@ -188,14 +270,12 @@ export default function LavoriClient({
       </div>
 
       {dirty && (
-        <div className="section">
-          <button
-            className="btn btnPrimary"
-            onClick={salvaModifiche}
-          >
-            Salva modifiche
-          </button>
-        </div>
+        <button
+          className="btn btnPrimary"
+          onClick={salvaModifiche}
+        >
+          Salva modifiche
+        </button>
       )}
     </div>
   );

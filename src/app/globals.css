@@ -871,3 +871,6 @@ button {
   flex-direction: column;
   gap: 16px;
 }
+.filtro-box .row {
+  flex-wrap: wrap;
+}

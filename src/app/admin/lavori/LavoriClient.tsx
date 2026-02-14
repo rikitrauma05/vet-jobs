@@ -29,36 +29,40 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
   const [rows, setRows] = useState(lavori);
   const [dirty, setDirty] = useState(false);
 
-  const [filters, setFilters] = useState({
-    cliente: "",
-    prestazione: "",
-    dataFrom: "",
-    dataTo: "",
-    prezzoMin: "",
-    prezzoMax: "",
-  });
+  const [clienteFilter, setClienteFilter] = useState("");
+  const [prestazioneFilter, setPrestazioneFilter] = useState("");
 
+  function resetFiltri() {
+    setClienteFilter("");
+    setPrestazioneFilter("");
+  }
+
+  /* 🔹 Liste uniche per autocomplete */
+  const clientiUnici = useMemo(() => {
+    return Array.from(
+      new Set(rows.map((l) => getNome(l.clienti)))
+    ).filter(Boolean) as string[];
+  }, [rows]);
+
+  const prestazioniUniche = useMemo(() => {
+    return Array.from(
+      new Set(rows.map((l) => getNome(l.prestazioni)))
+    ).filter(Boolean) as string[];
+  }, [rows]);
+
+  /* 🔹 Filtro + ordinamento */
   const filteredRows = useMemo(() => {
     return rows
       .filter((l) => {
-        const data = l.data_prestazione ?? l.created_at;
-        const prezzo = l.prezzo ?? 0;
-
         return (
-          (!filters.cliente ||
+          (!clienteFilter ||
             getNome(l.clienti)
               .toLowerCase()
-              .includes(filters.cliente.toLowerCase())) &&
-          (!filters.prestazione ||
+              .includes(clienteFilter.toLowerCase())) &&
+          (!prestazioneFilter ||
             getNome(l.prestazioni)
               .toLowerCase()
-              .includes(filters.prestazione.toLowerCase())) &&
-          (!filters.dataFrom || data >= filters.dataFrom) &&
-          (!filters.dataTo || data <= filters.dataTo) &&
-          (!filters.prezzoMin ||
-            prezzo >= Number(filters.prezzoMin)) &&
-          (!filters.prezzoMax ||
-            prezzo <= Number(filters.prezzoMax))
+              .includes(prestazioneFilter.toLowerCase()))
         );
       })
       .sort((a, b) => {
@@ -66,7 +70,7 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
         const dataB = b.data_prestazione ?? b.created_at;
         return new Date(dataB).getTime() - new Date(dataA).getTime();
       });
-  }, [rows, filters]);
+  }, [rows, clienteFilter, prestazioneFilter]);
 
   const totale = filteredRows.reduce(
     (acc, l) => acc + (l.prezzo ?? 0),
@@ -136,72 +140,46 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
         Totale incasso: <strong>€ {totale.toFixed(2)}</strong>
       </div>
 
+      {/* 🔎 FILTRI */}
       <div className="filtro-box">
-        <input
-          className="input"
-          placeholder="Filtra cliente"
-          onChange={(e) =>
-            setFilters((f) => ({ ...f, cliente: e.target.value }))
-          }
-        />
+        <div className="row" style={{ gap: 8 }}>
+          <input
+            list="clienti-list"
+            className="input"
+            placeholder="Cerca cliente..."
+            value={clienteFilter}
+            onChange={(e) =>
+              setClienteFilter(e.target.value)
+            }
+          />
+          <datalist id="clienti-list">
+            {clientiUnici.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
 
-        <input
-          className="input"
-          placeholder="Filtra prestazione"
-          onChange={(e) =>
-            setFilters((f) => ({
-              ...f,
-              prestazione: e.target.value,
-            }))
-          }
-        />
+          <input
+            list="prestazioni-list"
+            className="input"
+            placeholder="Cerca prestazione..."
+            value={prestazioneFilter}
+            onChange={(e) =>
+              setPrestazioneFilter(e.target.value)
+            }
+          />
+          <datalist id="prestazioni-list">
+            {prestazioniUniche.map((p) => (
+              <option key={p} value={p} />
+            ))}
+          </datalist>
 
-        <div className="row">
-          <input
-            type="date"
-            className="input"
-            onChange={(e) =>
-              setFilters((f) => ({
-                ...f,
-                dataFrom: e.target.value,
-              }))
-            }
-          />
-          <input
-            type="date"
-            className="input"
-            onChange={(e) =>
-              setFilters((f) => ({
-                ...f,
-                dataTo: e.target.value,
-              }))
-            }
-          />
-        </div>
-
-        <div className="row">
-          <input
-            type="number"
-            className="input"
-            placeholder="Prezzo min"
-            onChange={(e) =>
-              setFilters((f) => ({
-                ...f,
-                prezzoMin: e.target.value,
-              }))
-            }
-          />
-          <input
-            type="number"
-            className="input"
-            placeholder="Prezzo max"
-            onChange={(e) =>
-              setFilters((f) => ({
-                ...f,
-                prezzoMax: e.target.value,
-              }))
-            }
-          />
+          <button
+            type="button"
+            className="btn"
+            onClick={resetFiltri}
+          >
+            Reset
+          </button>
         </div>
       </div>
 

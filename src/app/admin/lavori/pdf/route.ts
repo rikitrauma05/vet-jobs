@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import PDFDocument from "pdfkit";
+import { PassThrough } from "stream";
+
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   await requireAdmin();
@@ -12,7 +15,6 @@ export async function POST(req: Request) {
   let query = supabase
     .from("lavori")
     .select(`
-      id,
       prezzo,
       data_prestazione,
       created_at,
@@ -26,13 +28,11 @@ export async function POST(req: Request) {
   const { data } = await query;
 
   const doc = new PDFDocument({ margin: 40 });
-  const chunks: Buffer[] = [];
+  const stream = new PassThrough();
 
-  doc.on("data", (chunk: Buffer) => {
-    chunks.push(chunk);
-  });
+  doc.pipe(stream);
 
-  const total = (data ?? []).reduce(
+  const totale = (data ?? []).reduce(
     (acc: number, l: any) => acc + (l.prezzo ?? 0),
     0
   );
@@ -58,25 +58,26 @@ export async function POST(req: Request) {
   });
 
   doc.moveDown();
-  doc.fontSize(14).text(`Totale: € ${total.toFixed(2)}`, {
-    align: "right",
-  });
+  doc.fontSize(14).text(`Totale: € ${totale.toFixed(2)}`);
 
-    doc.end();
+  doc.end();
 
-  const pdfBuffer: Buffer = await new Promise((resolve) => {
-    doc.on("end", () => {
-      resolve(Buffer.concat(chunks));
+  const chunks: Buffer[] = [];
+
+  return new Promise<NextResponse>((resolve) => {
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("end", () => {
+      const pdfBuffer = Buffer.concat(chunks);
+
+      resolve(
+        new NextResponse(pdfBuffer, {
+          headers: {
+            "Content-Type": "application/pdf",
+            "Content-Disposition":
+              "attachment; filename=report-prestazioni.pdf",
+          },
+        })
+      );
     });
   });
-
-  const pdfUint8 = new Uint8Array(pdfBuffer);
-
-  return new NextResponse(pdfUint8, {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": "attachment; filename=report-prestazioni.pdf",
-    },
-  });
-
 }

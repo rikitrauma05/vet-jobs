@@ -47,6 +47,7 @@ export default async function LavoriVetPage() {
       id,
       descrizione,
       created_at,
+      data_prestazione,
       clienti:clienti!lavori_cliente_id_fkey(nome),
       prestazioni:prestazioni!lavori_prestazione_id_fkey(nome)
     `
@@ -63,6 +64,7 @@ export default async function LavoriVetPage() {
         action="/vet/lavori/new"
         method="POST"
         style={{ marginTop: 16, marginBottom: 24 }}
+        className="vet-form"
       >
         <div className="row" style={{ gap: 8, marginBottom: 8 }}>
           <select name="cliente_id" required>
@@ -84,9 +86,23 @@ export default async function LavoriVetPage() {
           </select>
         </div>
 
-        <textarea name="descrizione" placeholder="Descrizione (opzionale)" />
+        {/* 🔥 NUOVO CAMPO DATA */}
+        <input
+          type="date"
+          name="data_prestazione"
+          defaultValue={new Date().toISOString().split("T")[0]}
+          required
+        />
 
-        <button className="btn btnPrimary" style={{ marginTop: 8 }}>
+        <textarea
+          name="descrizione"
+          placeholder="Descrizione (opzionale)"
+        />
+
+        <button
+          className="btn btnPrimary"
+          style={{ marginTop: 8 }}
+        >
           Salva lavoro
         </button>
       </form>
@@ -101,16 +117,29 @@ export default async function LavoriVetPage() {
           </tr>
         </thead>
         <tbody>
-          {lavori?.map((l: any) => (
-            <tr key={l.id}>
-              <td data-label="Cliente">{getNome(l.clienti) ?? "—"}</td>
-              <td data-label="Prestazione">{getNome(l.prestazioni) ?? "—"}</td>
-              <td data-label="Descrizione">{l.descrizione || "—"}</td>
-              <td data-label="Data">
-                {new Date(l.created_at).toLocaleDateString()}
-              </td>
-            </tr>
-          ))}
+          {lavori?.map((l: any) => {
+            const dataVisuale =
+              l.data_prestazione ?? l.created_at;
+
+            return (
+              <tr key={l.id}>
+                <td data-label="Cliente">
+                  {getNome(l.clienti) ?? "—"}
+                </td>
+                <td data-label="Prestazione">
+                  {getNome(l.prestazioni) ?? "—"}
+                </td>
+                <td data-label="Descrizione">
+                  {l.descrizione || "—"}
+                </td>
+                <td data-label="Data">
+                  {new Date(
+                    dataVisuale
+                  ).toLocaleDateString()}
+                </td>
+              </tr>
+            );
+          })}
 
           {(!lavori || lavori.length === 0) && (
             <tr>

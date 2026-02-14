@@ -26,7 +26,15 @@ function getEmail(rel: any) {
 }
 
 export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
-  const [rows, setRows] = useState(lavori);
+  /* 🔹 ORDINAMENTO SOLO ALL'INIZIALIZZAZIONE */
+  const [rows, setRows] = useState(() =>
+    [...lavori].sort((a, b) => {
+      const dataA = new Date(a.data_prestazione ?? a.created_at).getTime();
+      const dataB = new Date(b.data_prestazione ?? b.created_at).getTime();
+      return dataB - dataA;
+    })
+  );
+
   const [dirty, setDirty] = useState(false);
 
   const [clienteFilter, setClienteFilter] = useState("");
@@ -50,30 +58,21 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
     ).filter(Boolean) as string[];
   }, [rows]);
 
-  /* 🔹 Filtro + ordinamento */
+  /* 🔹 SOLO FILTRO — NIENTE SORT QUI */
   const filteredRows = useMemo(() => {
-  const filtered = rows.filter((l) => {
-    return (
-      (!clienteFilter ||
-        getNome(l.clienti)
-          .toLowerCase()
-          .includes(clienteFilter.toLowerCase())) &&
-      (!prestazioneFilter ||
-        getNome(l.prestazioni)
-          .toLowerCase()
-          .includes(prestazioneFilter.toLowerCase()))
-    );
-  });
-
-  if (dirty) return filtered;
-
-  return filtered.slice().sort((a, b) => {
-    const dataA = new Date(a.data_prestazione ?? a.created_at).getTime();
-    const dataB = new Date(b.data_prestazione ?? b.created_at).getTime();
-    return dataB - dataA;
-  });
-}, [rows, clienteFilter, prestazioneFilter, dirty]);
-
+    return rows.filter((l) => {
+      return (
+        (!clienteFilter ||
+          getNome(l.clienti)
+            .toLowerCase()
+            .includes(clienteFilter.toLowerCase())) &&
+        (!prestazioneFilter ||
+          getNome(l.prestazioni)
+            .toLowerCase()
+            .includes(prestazioneFilter.toLowerCase()))
+      );
+    });
+  }, [rows, clienteFilter, prestazioneFilter]);
 
   const totale = filteredRows.reduce(
     (acc, l) => acc + (l.prezzo ?? 0),
@@ -114,7 +113,7 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
     });
 
     setDirty(false);
-    location.reload();
+    location.reload(); // 🔥 qui si riordina
   }
 
   async function elimina(id: string) {

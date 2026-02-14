@@ -6,6 +6,7 @@ type Lavoro = {
   id: string;
   descrizione: string | null;
   created_at: string;
+  data_prestazione?: string | null;
   prezzo: number | null;
   clienti: any;
   prestazioni: any;
@@ -30,10 +31,23 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
 
   const totale = rows.reduce((acc, l) => acc + (l.prezzo ?? 0), 0);
 
-  function handleChange(id: string, value: string) {
+  function handlePrezzoChange(id: string, value: string) {
     setRows((prev) =>
       prev.map((r) =>
-        r.id === id ? { ...r, prezzo: value === "" ? null : Number(value) } : r
+        r.id === id
+          ? { ...r, prezzo: value === "" ? null : Number(value) }
+          : r
+      )
+    );
+    setDirty(true);
+  }
+
+  function handleDataChange(id: string, value: string) {
+    setRows((prev) =>
+      prev.map((r) =>
+        r.id === id
+          ? { ...r, data_prestazione: value }
+          : r
       )
     );
     setDirty(true);
@@ -43,7 +57,13 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
     await fetch("/admin/lavori/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(rows.map((r) => ({ id: r.id, prezzo: r.prezzo }))),
+      body: JSON.stringify(
+        rows.map((r) => ({
+          id: r.id,
+          prezzo: r.prezzo,
+          data_prestazione: r.data_prestazione ?? null,
+        }))
+      ),
     });
 
     setDirty(false);
@@ -66,7 +86,7 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
     <div className="card">
       <div className="card-header">
         <h1 className="card-title">Gestione Lavori</h1>
-        <p className="muted">Modifica prezzi o elimina lavori</p>
+        <p className="muted">Modifica prezzi, date o elimina lavori</p>
       </div>
 
       <div className="section">
@@ -76,43 +96,67 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
       </div>
 
       <div className="lavori-container">
-        {rows.map((l) => (
-          <div key={l.id} className="lavoro-card">
-            <div className="lavoro-top">
-              <div className="lavoro-cliente">
-                {getNome(l.clienti)}
+        {rows.map((l) => {
+          const dataVisuale = l.data_prestazione ?? l.created_at;
+
+          return (
+            <div key={l.id} className="lavoro-card">
+              <div className="lavoro-top">
+                <div className="lavoro-cliente">
+                  {getNome(l.clienti)}
+                </div>
+                <div className="lavoro-data">
+                  {new Date(dataVisuale).toLocaleDateString()}
+                </div>
               </div>
-              <div className="lavoro-data">
-                {new Date(l.created_at).toLocaleDateString()}
+
+              <div className="lavoro-body">
+                <div>
+                  <strong>Prestazione:</strong>{" "}
+                  {getNome(l.prestazioni)}
+                </div>
+                <div>
+                  <strong>Vet:</strong>{" "}
+                  {getEmail(l.vet)}
+                </div>
+                {l.descrizione && (
+                  <div>
+                    <strong>Note:</strong> {l.descrizione}
+                  </div>
+                )}
               </div>
+
+              <input
+                type="date"
+                className="input"
+                value={
+                  l.data_prestazione ??
+                  new Date(l.created_at).toISOString().split("T")[0]
+                }
+                onChange={(e) =>
+                  handleDataChange(l.id, e.target.value)
+                }
+              />
+
+              <input
+                className="input lavoro-prezzo"
+                type="number"
+                placeholder="Prezzo"
+                value={l.prezzo ?? ""}
+                onChange={(e) =>
+                  handlePrezzoChange(l.id, e.target.value)
+                }
+              />
+
+              <button
+                className="btn btnDanger"
+                onClick={() => elimina(l.id)}
+              >
+                Elimina
+              </button>
             </div>
-
-            <div className="lavoro-body">
-              <div><strong>Prestazione:</strong> {getNome(l.prestazioni)}</div>
-              <div><strong>Vet:</strong> {getEmail(l.vet)}</div>
-              {l.descrizione && (
-                <div><strong>Note:</strong> {l.descrizione}</div>
-              )}
-            </div>
-
-            <input
-              className="input lavoro-prezzo"
-              type="number"
-              placeholder="Prezzo"
-              value={l.prezzo ?? ""}
-              onChange={(e) =>
-                handleChange(l.id, e.target.value)
-              }
-            />
-
-            <button
-              className="btn btnDanger"
-              onClick={() => elimina(l.id)}
-            >
-              Elimina
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {dirty && (

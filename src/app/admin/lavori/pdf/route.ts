@@ -2,14 +2,28 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import PDFDocument from "pdfkit";
-import { PassThrough } from "stream";
+import path from "path";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   await requireAdmin();
 
-  const { dataFrom, dataTo } = await req.json();
+  let dataFrom: string | null = null;
+  let dataTo: string | null = null;
+
+  const contentType = req.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    const body = await req.json();
+    dataFrom = body.dataFrom ?? null;
+    dataTo = body.dataTo ?? null;
+  } else {
+    const form = await req.formData();
+    dataFrom = (form.get("dataFrom") as string) ?? null;
+    dataTo = (form.get("dataTo") as string) ?? null;
+  }
+
   const supabase = await createSupabaseServerClient();
 
   let query = supabase
@@ -27,18 +41,32 @@ export async function POST(req: Request) {
 
   const { data } = await query;
 
-  const doc = new PDFDocument({ margin: 40 });
-  const stream = new PassThrough();
+ const doc = new PDFDocument({
+  margin: 40,
+  font: path.join(process.cwd(), "public/fonts/static/Roboto-Regular.ttf"),
+});
 
-  doc.pipe(stream);
+  const buffers: Buffer[] = [];
+
+  doc.on("data", (chunk) => buffers.push(chunk));
+
+  const fontPath = path.join(
+    process.cwd(),
+    "public",
+    "fonts",
+    "static",
+    "Roboto-Regular.ttf"
+  );
+
 
   const totale = (data ?? []).reduce(
     (acc: number, l: any) => acc + (l.prezzo ?? 0),
     0
   );
 
-  doc.fontSize(18).text("Report Prestazioni", { align: "center" });
+  doc.fontSize(20).text("Report Prestazioni", { align: "center" });
   doc.moveDown();
+
   doc.fontSize(12);
 
   data?.forEach((l: any) => {
@@ -53,7 +81,7 @@ export async function POST(req: Request) {
       : l.prestazioni?.nome;
 
     doc.text(
-      `${new Date(dataEffettiva).toLocaleDateString()} - ${cliente} - ${prestazione} - € ${l.prezzo ?? 0}`
+      `${new Date(dataEffettiva).toLocaleDateString()} | ${cliente} | ${prestazione} | € ${l.prezzo ?? 0}`
     );
   });
 
@@ -62,22 +90,14 @@ export async function POST(req: Request) {
 
   doc.end();
 
-  const chunks: Buffer[] = [];
+  const pdfBuffer: Buffer = await new Promise((resolve) => {
+    doc.on("end", () => resolve(Buffer.concat(buffers)));
+  });
 
-  return new Promise<NextResponse>((resolve) => {
-    stream.on("data", (chunk) => chunks.push(chunk));
-    stream.on("end", () => {
-      const pdfBuffer = Buffer.concat(chunks);
-
-      resolve(
-        new NextResponse(pdfBuffer, {
-          headers: {
-            "Content-Type": "application/pdf",
-            "Content-Disposition":
-              "attachment; filename=report-prestazioni.pdf",
-          },
-        })
-      );
-    });
+ return new NextResponse(new Uint8Array(pdfBuffer), {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": "attachment; filename=report-prestazioni.pdf",
+    },
   });
 }

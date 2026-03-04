@@ -156,26 +156,29 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
 
     <button
       className="btn btnPrimary"
-      onClick={async () => {
-        const dataFrom = (document.getElementById("pdf-from") as HTMLInputElement)?.value;
-        const dataTo = (document.getElementById("pdf-to") as HTMLInputElement)?.value;
+      onClick={() => {
+  const dataFrom = (document.getElementById("pdf-from") as HTMLInputElement)?.value;
+  const dataTo = (document.getElementById("pdf-to") as HTMLInputElement)?.value;
 
-        const res = await fetch("/admin/lavori/pdf", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dataFrom, dataTo }),
-        });
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "/admin/lavori/pdf";
+  form.style.display = "none";
 
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
+  const inputFrom = document.createElement("input");
+  inputFrom.name = "dataFrom";
+  inputFrom.value = dataFrom ?? "";
 
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "report-prestazioni.pdf";
-        a.click();
+  const inputTo = document.createElement("input");
+  inputTo.name = "dataTo";
+  inputTo.value = dataTo ?? "";
 
-        window.URL.revokeObjectURL(url);
-      }}
+  form.appendChild(inputFrom);
+  form.appendChild(inputTo);
+
+  document.body.appendChild(form);
+  form.submit();
+}}
     >
       Scarica PDF
     </button>

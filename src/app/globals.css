@@ -874,3 +874,10 @@ button {
 .filtro-box .row {
   flex-wrap: wrap;
 }
+.pdf-checkbox {
+  margin: 10px 0 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}

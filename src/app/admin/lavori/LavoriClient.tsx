@@ -26,7 +26,7 @@ function getEmail(rel: any) {
 }
 
 export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
-  /* 🔹 ORDINAMENTO SOLO UNA VOLTA */
+
   const [rows, setRows] = useState(() =>
     [...lavori].sort((a, b) => {
       const dataA = new Date(a.data_prestazione ?? a.created_at).getTime();
@@ -40,12 +40,18 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
   const [clienteFilter, setClienteFilter] = useState("");
   const [prestazioneFilter, setPrestazioneFilter] = useState("");
 
+  const [dataFrom, setDataFrom] = useState("");
+  const [dataTo, setDataTo] = useState("");
+
+  const [mostraFiltri, setMostraFiltri] = useState(true);
+
   function resetFiltri() {
     setClienteFilter("");
     setPrestazioneFilter("");
+    setDataFrom("");
+    setDataTo("");
   }
 
-  /* 🔹 Liste uniche autocomplete */
   const clientiUnici = useMemo(() => {
     return Array.from(
       new Set(rows.map((l) => getNome(l.clienti)))
@@ -58,21 +64,32 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
     ).filter(Boolean) as string[];
   }, [rows]);
 
-  /* 🔹 SOLO FILTRO */
   const filteredRows = useMemo(() => {
     return rows.filter((l) => {
-      return (
-        (!clienteFilter ||
-          getNome(l.clienti)
-            .toLowerCase()
-            .includes(clienteFilter.toLowerCase())) &&
-        (!prestazioneFilter ||
-          getNome(l.prestazioni)
-            .toLowerCase()
-            .includes(prestazioneFilter.toLowerCase()))
-      );
+
+      const data = new Date(l.data_prestazione ?? l.created_at).getTime();
+
+      const fromOk =
+        !dataFrom || data >= new Date(dataFrom).getTime();
+
+      const toOk =
+        !dataTo || data <= new Date(dataTo).getTime();
+
+      const clienteOk =
+        !clienteFilter ||
+        getNome(l.clienti)
+          .toLowerCase()
+          .includes(clienteFilter.toLowerCase());
+
+      const prestazioneOk =
+        !prestazioneFilter ||
+        getNome(l.prestazioni)
+          .toLowerCase()
+          .includes(prestazioneFilter.toLowerCase());
+
+      return fromOk && toOk && clienteOk && prestazioneOk;
     });
-  }, [rows, clienteFilter, prestazioneFilter]);
+  }, [rows, clienteFilter, prestazioneFilter, dataFrom, dataTo]);
 
   const totale = filteredRows.reduce(
     (acc, l) => acc + (l.prezzo ?? 0),
@@ -113,12 +130,11 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
     });
 
     setDirty(false);
-    location.reload(); // riordina solo qui
+    location.reload();
   }
 
   async function elimina(id: string) {
-    if (!confirm("Sei sicuro di voler eliminare questo lavoro?"))
-      return;
+    if (!confirm("Sei sicuro di voler eliminare questo lavoro?")) return;
 
     await fetch("/admin/lavori/delete", {
       method: "POST",
@@ -129,91 +145,105 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
     location.reload();
   }
 
+  function scaricaPDF() {
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = "/admin/lavori/pdf";
+    form.style.display = "none";
+
+    const fields = {
+      dataFrom,
+      dataTo,
+      cliente: clienteFilter,
+      prestazione: prestazioneFilter,
+      mostraFiltri: mostraFiltri ? "true" : "false"
+    };
+
+    Object.entries(fields).forEach(([key, value]) => {
+      const input = document.createElement("input");
+      input.name = key;
+      input.value = value ?? "";
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+
   return (
     <div className="card">
+
       <div className="card-header">
         <h1 className="card-title">Gestione Lavori</h1>
-        <p className="muted">
-          Filtra, modifica o elimina lavori
-        </p>
+        <p className="muted">Filtra, modifica o elimina lavori</p>
       </div>
 
       <div className="totale-box">
         Totale incasso: <strong>€ {totale.toFixed(2)}</strong>
       </div>
-      <div className="pdf-box" style={{ marginTop: 12 }}>
-  <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-    <input
-      type="date"
-      className="input"
-      id="pdf-from"
-    />
-    <input
-      type="date"
-      className="input"
-      id="pdf-to"
-    />
-
-    <button
-      className="btn btnPrimary"
-      onClick={() => {
-  const dataFrom = (document.getElementById("pdf-from") as HTMLInputElement)?.value;
-  const dataTo = (document.getElementById("pdf-to") as HTMLInputElement)?.value;
-
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = "/admin/lavori/pdf";
-  form.style.display = "none";
-
-  const inputFrom = document.createElement("input");
-  inputFrom.name = "dataFrom";
-  inputFrom.value = dataFrom ?? "";
-
-  const inputTo = document.createElement("input");
-  inputTo.name = "dataTo";
-  inputTo.value = dataTo ?? "";
-
-  form.appendChild(inputFrom);
-  form.appendChild(inputTo);
-
-  document.body.appendChild(form);
-  form.submit();
-}}
-    >
-      Scarica PDF
-    </button>
-  </div>
-</div>
-
 
       {/* FILTRI */}
       <div className="filtro-box">
-        <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-          <input
-            list="clienti-list"
-            className="input"
-            placeholder="Cerca cliente..."
-            value={clienteFilter}
-            onChange={(e) => setClienteFilter(e.target.value)}
-          />
-          <datalist id="clienti-list">
-            {clientiUnici.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
+
+        <div className="row">
 
           <input
-            list="prestazioni-list"
+            type="date"
             className="input"
-            placeholder="Cerca prestazione..."
+            value={dataFrom}
+            onChange={(e) => setDataFrom(e.target.value)}
+          />
+
+          <input
+            type="date"
+            className="input"
+            value={dataTo}
+            onChange={(e) => setDataTo(e.target.value)}
+          />
+
+          <select
+            className="input"
+            value={clienteFilter}
+            onChange={(e) => setClienteFilter(e.target.value)}
+          >
+            <option value="">Tutti i clienti</option>
+            {clientiUnici.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="input"
             value={prestazioneFilter}
             onChange={(e) => setPrestazioneFilter(e.target.value)}
-          />
-          <datalist id="prestazioni-list">
+          >
+            <option value="">Tutte le prestazioni</option>
             {prestazioniUniche.map((p) => (
-              <option key={p} value={p} />
+              <option key={p} value={p}>
+                {p}
+              </option>
             ))}
-          </datalist>
+          </select>
+
+        </div>
+
+        <div className="row">
+
+          <label className="pdf-checkbox">
+          <input
+            type="checkbox"
+            checked={mostraFiltri}
+            onChange={(e) => setMostraFiltri(e.target.checked)}
+          />
+          Mostra filtri nel PDF
+        </label>
+
+        </div>
+
+        <div className="row">
 
           <button
             type="button"
@@ -222,35 +252,49 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
           >
             Reset
           </button>
+
+          <button
+            className="btn btnPrimary"
+            onClick={scaricaPDF}
+          >
+            Scarica PDF
+          </button>
+
         </div>
+
       </div>
 
+      {/* LISTA LAVORI */}
       <div className="lavori-container">
+
         {filteredRows.map((l) => {
+
           const data = l.data_prestazione ?? l.created_at;
 
           return (
             <div key={l.id} className="lavoro-card">
+
               <div className="lavoro-top">
                 <div>{getNome(l.clienti)}</div>
-                <div>
-                  {new Date(data).toLocaleDateString()}
-                </div>
+                <div>{new Date(data).toLocaleDateString()}</div>
               </div>
 
               <div className="lavoro-body">
+
                 <div>
-                  <strong>Prestazione:</strong>{" "}
-                  {getNome(l.prestazioni)}
+                  <strong>Prestazione:</strong> {getNome(l.prestazioni)}
                 </div>
+
                 <div>
                   <strong>Vet:</strong> {getEmail(l.vet)}
                 </div>
+
                 {l.descrizione && (
                   <div>
                     <strong>Note:</strong> {l.descrizione}
                   </div>
                 )}
+
               </div>
 
               <input
@@ -258,9 +302,7 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
                 className="input"
                 value={
                   l.data_prestazione ??
-                  new Date(l.created_at)
-                    .toISOString()
-                    .split("T")[0]
+                  new Date(l.created_at).toISOString().split("T")[0]
                 }
                 onChange={(e) =>
                   handleDataChange(l.id, e.target.value)
@@ -283,21 +325,21 @@ export default function LavoriClient({ lavori }: { lavori: Lavoro[] }) {
               >
                 Elimina
               </button>
+
             </div>
           );
         })}
+
       </div>
 
       {dirty && (
         <div style={{ marginTop: 16 }}>
-          <button
-            className="btn btnPrimary"
-            onClick={salvaModifiche}
-          >
+          <button className="btn btnPrimary" onClick={salvaModifiche}>
             Salva modifiche
           </button>
         </div>
       )}
+
     </div>
   );
 }

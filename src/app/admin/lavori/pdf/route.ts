@@ -181,10 +181,26 @@ export async function POST(req: Request) {
     doc.on("end", () => resolve(Buffer.concat(buffers)));
   });
 
-  return new NextResponse(new Uint8Array(pdfBuffer), {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": "attachment; filename=report-prestazioni.pdf",
-    },
-  });
+  let fileName = "report-lavori";
+
+if (clienteFiltro) {
+  fileName += "-" + clienteFiltro.toLowerCase().replace(/\s+/g, "-");
+}
+
+if (dataFrom && dataTo) {
+  fileName += `-${dataFrom}_${dataTo}`;
+} else if (dataFrom) {
+  fileName += `-da-${dataFrom}`;
+} else if (dataTo) {
+  fileName += `-fino-${dataTo}`;
+}
+
+fileName += ".pdf";
+
+return new NextResponse(new Uint8Array(pdfBuffer), {
+  headers: {
+    "Content-Type": "application/pdf",
+    "Content-Disposition": `attachment; filename="${fileName}"`,
+  },
+});
 }
